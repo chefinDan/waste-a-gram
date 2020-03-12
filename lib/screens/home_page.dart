@@ -1,7 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:waste_a_gram/constants.dart';
-import 'package:waste_a_gram/screens/camera_screen.dart';
+import 'package:waste_a_gram/screens/camera.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key key, this.title, this.updateState, this.preferences }) : super(key: key);
@@ -33,7 +34,7 @@ class _HomePageState extends State<HomePage> {
     widget.updateState(); 
   }
 
-  Widget buildDrawer(BuildContext context){
+  Widget drawer(BuildContext context){
     return Drawer(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -47,6 +48,26 @@ class _HomePageState extends State<HomePage> {
         )
       );
   }
+
+  Widget postList = StreamBuilder(
+    stream: Firestore.instance.collection('posts').snapshots(),
+    builder: (context, snapshot){
+      if(snapshot.hasData){
+        return ListView.builder(
+          itemCount: snapshot.data.documents.length,
+          itemBuilder: (context, index){
+            var post = snapshot.data.documents[index];
+            return ListTile(
+              leading: Text(post['weight'].toString()),
+              title: Text('Post Title'),
+            );
+          }
+        );
+      }else{
+        return Center(child: CircularProgressIndicator());
+      }
+    }
+  );
 
   @override void initState() {
     try{
@@ -66,17 +87,16 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      endDrawer: buildDrawer(context),
-      body: Center(
-        child: null 
-      ),
+      endDrawer: drawer(context),
+      body: postList,
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          Navigator.of(context).push(MaterialPageRoute(builder: (context) => CameraScreen() ));
+          Navigator.of(context).push(MaterialPageRoute(builder: (context) => Camera() ));
         },
         child: Icon(Icons.add),  
       ),
     );
-    
   }
+
+  
 }
