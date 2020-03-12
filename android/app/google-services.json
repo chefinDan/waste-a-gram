@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "985410945568",
+    "firebase_url": "https://food-waste-tracker-410a7.firebaseio.com",
+    "project_id": "food-waste-tracker-410a7",
+    "storage_bucket": "food-waste-tracker-410a7.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:985410945568:android:ecea8c2addf00287a5b245",
+        "android_client_info": {
+          "package_name": "osu.greendan.waste_a_gram"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "985410945568-q8bv368gjcde9qso710a8s5uhr3fh0of.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCmSQdRf9Cl7e5EkDsihFdGzyjU3AzeF4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "985410945568-q8bv368gjcde9qso710a8s5uhr3fh0of.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
