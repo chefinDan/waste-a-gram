@@ -18,7 +18,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> { 
 
   // -- state
-  var _entries = [];
   bool switchVal;
   // -- 
 
@@ -30,7 +29,6 @@ class _HomePageState extends State<HomePage> {
       switchVal = newVal;
     });
     saveSwitchVal(switchVal);
-    // widget.preferences.setBool(SWITCH_VALUE, switchVal);
     widget.updateState(); 
   }
 
@@ -49,18 +47,53 @@ class _HomePageState extends State<HomePage> {
       );
   }
 
-  Widget postList = StreamBuilder(
+  static void onDismissed(DocumentSnapshot snapshot){
+    Firestore.instance.runTransaction(
+      (Transaction transaction) {
+        return transaction.delete(snapshot.reference);
+      }
+    );
+  }
+
+  static Widget postListTile(post){   
+    return Dismissible(
+      background: Container(
+        color: Colors.red, 
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(left: 10),
+              child: Icon(Icons.delete, color: Colors.white,),
+            ),
+            Padding(
+              padding: EdgeInsets.only(right: 10),
+              child: Icon(Icons.delete, color: Colors.white,),
+            )
+          ],
+        ),
+      ),
+      onDismissed: (_) => onDismissed(post),
+      key: Key(post.hashCode.toString()), 
+      child: ListTile(
+        leading: Text(post['weight'].toString()),
+        title: Text('Post Title'),
+      )
+    );
+  }
+
+  Widget postList = StreamBuilder<QuerySnapshot>(
     stream: Firestore.instance.collection('posts').snapshots(),
-    builder: (context, snapshot){
+    builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot){
       if(snapshot.hasData){
+        if(snapshot.data.documents.length == 0){
+          return Center(child: Text('You have no photos', style: Theme.of(context).textTheme.display1,));
+        }
         return ListView.builder(
           itemCount: snapshot.data.documents.length,
           itemBuilder: (context, index){
             var post = snapshot.data.documents[index];
-            return ListTile(
-              leading: Text(post['weight'].toString()),
-              title: Text('Post Title'),
-            );
+            return postListTile(post);
           }
         );
       }else{

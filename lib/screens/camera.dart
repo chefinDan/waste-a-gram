@@ -1,12 +1,15 @@
 import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 import 'package:image_picker/image_picker.dart';
 import 'package:waste_a_gram/constants.dart';
 
+
 class Camera extends StatefulWidget{
+
+  Camera();
 
   @override
   _CameraState createState() => _CameraState();
@@ -18,6 +21,21 @@ class _CameraState extends State<Camera> {
 
   void getImage() async {
     image = await ImagePicker.pickImage(source: ImageSource.gallery);
+    setState(() {});
+  }
+
+  Future postImage() async {
+    StorageReference storageRef = FirebaseStorage.instance.ref().child('${DateTime.now()}.${p.basename(image.path)}');
+    StorageUploadTask uploadTask = storageRef.putFile(image);
+    // uploadImage(uploadTask);
+    await uploadTask.onComplete;
+    final imageUrl = await storageRef.getDownloadURL();
+    print(imageUrl);
+    Firestore.instance.collection(POSTS).add({
+      WEIGHT: '22',
+      SUBMISSION_DATE: DateTime.now(),
+      IMAGE_URL: imageUrl
+    });
     setState(() {});
   }
 
@@ -41,11 +59,8 @@ class _CameraState extends State<Camera> {
           SizedBox(height: 40,),
           RaisedButton(
             child: Text('Post'),
-            onPressed: () { 
-              Firestore.instance.collection(POSTS).add({
-                WEIGHT: '22',
-                SUBMISSION_DATE: DateTime.now()
-              });
+            onPressed: () async { 
+              await postImage();
               Navigator.of(context).pop();
           })
         ],

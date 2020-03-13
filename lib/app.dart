@@ -47,7 +47,7 @@ class AppState extends State<App> {
       home: HomePage(
         title: 'Waste-a-gram', 
         updateState: updateTheme, 
-        preferences: widget.preferences
+        preferences: widget.preferences,
       ),
     );
   }
