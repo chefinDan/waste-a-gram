@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:waste_a_gram/constants.dart';
-import 'package:waste_a_gram/screens/home_page.dart';
+import 'package:waste_a_gram/screens/home_screen.dart';
 
 class App extends StatefulWidget {
   final SharedPreferences preferences;
@@ -44,7 +44,7 @@ class AppState extends State<App> {
     return MaterialApp(
       title: 'Waste-a-gram',
       theme: themeData,
-      home: HomePage(
+      home: HomeScreen(
         title: 'Waste-a-gram', 
         updateState: updateTheme, 
         preferences: widget.preferences,
