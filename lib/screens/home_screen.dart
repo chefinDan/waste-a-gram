@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:waste_a_gram/components/dismissible_background.dart';
-import 'package:waste_a_gram/components/food_list_tile.dart';
+import 'package:waste_a_gram/components/food_waste_tile.dart';
 import 'package:waste_a_gram/components/settings_drawer.dart';
 import 'package:waste_a_gram/constants.dart';
 import 'package:waste_a_gram/screens/select_image_screen.dart';
@@ -35,30 +35,7 @@ class HomeScreenState extends State<HomeScreen> {
     saveSwitchVal(switchVal);
     widget.updateState(); 
   }
-
-  static void onDismissed(DocumentSnapshot snapshot){
-    Firestore.instance.runTransaction(
-      (Transaction transaction) {
-        return transaction.delete(snapshot.reference);
-      }
-    );
-  }
-
-  static Widget postListTile(DocumentSnapshot snapshot){
-    var post = snapshot;
-    return Dismissible(
-      background: DismissibleBackground(direction: LEFT_TO_RIGHT, color: Colors.redAccent),
-      secondaryBackground: DismissibleBackground(direction: RIGHT_TO_LEFT, color: Colors.redAccent),
-      onDismissed: (_) => onDismissed(snapshot),
-      key: Key(post.hashCode.toString()), 
-      child: FoodWasteItem(
-        thumbnail: post[IMAGE_URL],
-        description: post[DESCRIPTION],
-        weight: post[WEIGHT],
-        submissionDate: (post[SUBMISSION_DATE] as Timestamp).toDate(),
-      )
-    );
-  }
+  
 
   Widget _postListBuilder(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot){
     if(snapshot.hasData){
@@ -68,9 +45,20 @@ class HomeScreenState extends State<HomeScreen> {
       return ListView.builder(
         padding: EdgeInsets.only(top: 20),
         itemCount: snapshot.data.documents.length,
-        reverse: true,
         itemBuilder: (context, index){
-          return postListTile(snapshot.data.documents[index]);
+          DocumentSnapshot post = snapshot.data.documents[index]; 
+          return FoodWasteTile(
+            snapshot: post, 
+            onDelete: (){
+              StorageReference fileRef = FirebaseStorage.instance.ref().child(post[FILENAME]);
+              fileRef.delete().catchError((err) => print(err));
+              Firestore.instance.runTransaction(
+                (Transaction transaction) {
+                  return transaction.delete(post.reference);
+                }
+              );
+
+            });
         },
       );
     }else{

@@ -8,6 +8,7 @@ import 'package:waste_a_gram/constants.dart';
 class PostPhotoDto{
   String description;
   String weight;
+  int quantity;
 }
 
 class PostImageScreen extends StatefulWidget{
@@ -28,9 +29,9 @@ class _PostImageScreenState extends State<PostImageScreen> {
     return TextFormField(
       autofocus: false,
       decoration: InputDecoration(
-        labelText: 'Description', border: OutlineInputBorder()
+        labelText: DESCRIPTION, border: OutlineInputBorder()
       ),
-      validator: (value) { if(value.isEmpty) {return "Title cannot be empty"; } return null; },
+      validator: (value) { if(value.isEmpty) {return "$DESCRIPTION cannot be empty"; } return null; },
       onSaved: (value) => _postPhotoDto.description = value
     );
   }
@@ -39,16 +40,32 @@ class _PostImageScreenState extends State<PostImageScreen> {
     return TextFormField(
       autofocus: false,
       decoration: InputDecoration(
-        labelText: 'Weight', border: OutlineInputBorder()
+        labelText: WEIGHT, border: OutlineInputBorder()
       ),
       validator: (value) { 
-        if(value.isEmpty) { return "Weight cannot be empty"; }
-        if(int.tryParse(value) == null) { return "Weight must be an integer number"; } 
+        if(value.isEmpty) { return "$WEIGHT cannot be empty"; }
+        if(int.tryParse(value) == null) { return "$WEIGHT must be an integer number"; } 
         return null;
         },
       onSaved: (value) => _postPhotoDto.weight = value,
     );
   }
+
+  Widget _quantityField(BuildContext context){
+    return TextFormField(
+      autofocus: false,
+      decoration: InputDecoration(
+        labelText: QUANTITY, border: OutlineInputBorder()
+      ),
+      validator: (value) { 
+        if(value.isEmpty) { return "$QUANTITY cannot be empty"; }
+        if(int.tryParse(value) == null) { return "$QUANTITY must be an integer number"; } 
+        return null;
+        },
+      onSaved: (value) => _postPhotoDto.quantity = int.parse(value),
+    );
+  }
+  
 
   Widget _postPhotoForm(BuildContext context) {
     return SingleChildScrollView(
@@ -73,6 +90,10 @@ class _PostImageScreenState extends State<PostImageScreen> {
                   padding: EdgeInsets.all(8.0),
                   child: _weightField(context)
                 ),
+                Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: _quantityField(context)
+                ),                
                 SizedBox(height: 10),
                 _postButton(context)
               ],
@@ -101,15 +122,22 @@ class _PostImageScreenState extends State<PostImageScreen> {
   }
 
   Future _postImage() async {
-    StorageReference storageRef = FirebaseStorage.instance.ref().child('${DateTime.now()}.${p.basename(widget.image.path)}');
+    String fileName = '${DateTime.now()}.${p.basename(widget.image.path)}';
+    StorageReference storageRef = FirebaseStorage.instance.ref().child(fileName);
     StorageUploadTask uploadTask = storageRef.putFile(widget.image);
-    await uploadTask.onComplete;
-    final imageUrl = await storageRef.getDownloadURL();
     Firestore.instance.collection(POSTS).add({
+      FILENAME: fileName, 
       DESCRIPTION: _postPhotoDto.description,
       WEIGHT: _postPhotoDto.weight,
+      QUANTITY: _postPhotoDto.quantity,
       SUBMISSION_DATE: DateTime.now(),
-      IMAGE_URL: imageUrl
+    })
+    .then((DocumentReference addResult) async {
+      await uploadTask.onComplete;
+      final imageUrl = await storageRef.getDownloadURL();
+      Firestore.instance.collection(POSTS).document(addResult.documentID)
+        .updateData({IMAGE_URL: imageUrl})
+        .catchError((err) => print(err.toString()));  
     });
   }
 

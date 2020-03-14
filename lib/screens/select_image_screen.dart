@@ -10,21 +10,27 @@ class SelectImageScreen extends StatefulWidget{
 
 class _SelectImageScreenState extends State<SelectImageScreen> {
 
-  // File image;
+  void pushPostImageScreen(File image){
+    Navigator.of(context).pushReplacement(MaterialPageRoute(
+      builder: (context) => PostImageScreen(image: image)
+    ));
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: RaisedButton(
-          child: Text('Select Photo'),
-          onPressed: () async {
-            File image = await ImagePicker.pickImage(source: ImageSource.gallery);
-            Navigator.of(context).pushReplacement(MaterialPageRoute(
-              builder: (context) => PostImageScreen(image: image)
-            ));
-          }
-        ) 
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          RaisedButton(
+            child: Text('Select Photo'),
+            onPressed: () async {
+              File image = await   ImagePicker.pickImage(source: ImageSource.gallery);
+              pushPostImageScreen(image);
+            }
+          ),
+        ]
       )
     );
   }
