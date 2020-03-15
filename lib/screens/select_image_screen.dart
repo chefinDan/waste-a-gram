@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:waste_a_gram/screens/post_image_screen.dart';
+import 'package:waste_a_gram/screens/upload_image_screen.dart';
 
 class SelectImageScreen extends StatefulWidget{
   @override
@@ -12,7 +12,7 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
 
   void pushPostImageScreen(File image){
     Navigator.of(context).pushReplacement(MaterialPageRoute(
-      builder: (context) => PostImageScreen(image: image)
+      builder: (context) => UploadImageScreen(image: image)
     ));
   }
 

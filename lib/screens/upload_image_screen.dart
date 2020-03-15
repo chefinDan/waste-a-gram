@@ -6,26 +6,22 @@ import 'package:flutter/material.dart';
 import 'package:location/location.dart';
 import 'package:path/path.dart' as p;
 import 'package:waste_a_gram/constants.dart';
+import 'package:waste_a_gram/models/food_waste_data.dart';
 
-class PostPhotoDto{
-  String description;
-  String weight;
-  int quantity;
-}
+class UploadImageScreen extends StatefulWidget{
 
-class PostImageScreen extends StatefulWidget{
-
-  File image;
-  PostImageScreen({this.image});
+  FoodWasteData foodWasteData;
+  UploadImageScreen({File image}){
+    this.foodWasteData = FoodWasteData(image: image);
+  }
 
   @override
-  _PostImageScreenState createState() => _PostImageScreenState();
+  _UploadImageScreenState createState() => _UploadImageScreenState();
 }
 
-class _PostImageScreenState extends State<PostImageScreen> {
+class _UploadImageScreenState extends State<UploadImageScreen> {
 
   final formKey = GlobalKey<FormState>();
-  final PostPhotoDto _postPhotoDto = PostPhotoDto();
   LocationData locationData;
 
   @override
@@ -45,30 +41,32 @@ class _PostImageScreenState extends State<PostImageScreen> {
         labelText: DESCRIPTION, border: OutlineInputBorder()
       ),
       validator: (value) { if(value.isEmpty) {return "$DESCRIPTION cannot be empty"; } return null; },
-      onSaved: (value) => _postPhotoDto.description = value
+      onSaved: (value) => widget.foodWasteData.description = value
     );
   }
 
   Widget _weightField(BuildContext context){
     return TextFormField(
+      keyboardType: TextInputType.number,
       autofocus: false,
       decoration: InputDecoration(
-        labelText: WEIGHT, border: OutlineInputBorder()
+        labelText: WEIGHT + ' (oz)', border: OutlineInputBorder()
       ),
       validator: (value) { 
         if(value.isEmpty) { return "$WEIGHT cannot be empty"; }
         var parsed = int.tryParse(value);
         if(parsed == null) { return "$WEIGHT must be an integer number"; }
-        else if(parsed < 1) { return "$WEIGHT must be positive"; } 
+        else if(parsed < 1) { return "$WEIGHT minimum 1 oz"; } 
         return null;
         },
-      onSaved: (value) => _postPhotoDto.weight = value,
-    );
+      onSaved: (value) => widget.foodWasteData.weight = value,
+    );  
   }
 
   Widget _quantityField(BuildContext context){
     return TextFormField(
       autofocus: false,
+      keyboardType: TextInputType.number,
       decoration: InputDecoration(
         labelText: QUANTITY, border: OutlineInputBorder()
       ),
@@ -79,45 +77,40 @@ class _PostImageScreenState extends State<PostImageScreen> {
         else if(parsed < 1) { return '$QUANTITY must be positive'; } 
         return null;
         },
-      onSaved: (value) => _postPhotoDto.quantity = int.parse(value),
+      onSaved: (value) => widget.foodWasteData.quantity = int.parse(value),
     );
   }
-  
 
-  Widget _postPhotoForm(BuildContext context) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.only(top: 50),
+  Widget _image(BuildContext context){
+    return Container(
+      padding: EdgeInsets.only(bottom: 10),
+      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height/2),
+      child: Image.file(widget.foodWasteData.image, fit: BoxFit.fitHeight,)
+    );
+  }
+
+  Widget _form(BuildContext context){
+    return Form(
+      key: formKey,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Container(
-            padding: EdgeInsets.only(bottom: 10),
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height/2),
-            child: Image.file(widget.image, fit: BoxFit.fitHeight,)),
-          Form(
-            key: formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: _descriptionTextField(context)
-                ),
-                Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: _weightField(context)
-                ),
-                Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: _quantityField(context)
-                ),                
-                SizedBox(height: 10),
-                _postButton(context)
-              ],
-            ),
+          Padding(
+            padding: EdgeInsets.all(8.0),
+            child: _descriptionTextField(context)
           ),
+          Padding(
+            padding: EdgeInsets.all(8.0),
+            child: _weightField(context)
+          ),
+          Padding(
+            padding: EdgeInsets.all(8.0),
+            child: _quantityField(context)
+          ),                
+          SizedBox(height: 10),
+          _postButton(context)
         ],
-      )
+      ),
     );
   }
 
@@ -125,7 +118,7 @@ class _PostImageScreenState extends State<PostImageScreen> {
     return Builder(
       builder: (BuildContext context){
         return RaisedButton(
-          child: Text('Post'),
+          child: Icon(Icons.cloud_upload),
           onPressed: () async {
             if(formKey.currentState.validate()){
               formKey.currentState.save();
@@ -138,38 +131,20 @@ class _PostImageScreenState extends State<PostImageScreen> {
     );
   }
 
-  String status(StorageUploadTask task) {
-    String result;
-    if (task.isComplete) {
-      if (task.isSuccessful) {
-        result = 'Complete';
-      } else if (task.isCanceled) {
-        result = 'Canceled';
-      } else {
-        result = 'Failed ERROR: ${task.lastSnapshot.error}';
-      }
-    } else if (task.isInProgress) {
-      result = 'Uploading';
-    } else if (task.isPaused) {
-      result = 'Paused';
-    }
-    return result;
-  }
-
   Future _postImage() async {
-    final String fileName = '${DateTime.now()}.${p.basename(widget.image.path)}';
+    final String fileName = '${DateTime.now()}.${p.basename(widget.foodWasteData.image.path)}';
     StorageReference storageRef = FirebaseStorage.instance.ref().child(fileName);
     StorageUploadTask uploadTask = storageRef.putFile(
-      widget.image,
+      widget.foodWasteData.image,
       StorageMetadata(
         customMetadata: <String, String>{'activity': 'test'},
       )
     );
     Firestore.instance.collection(POSTS).add({
       FILENAME: fileName, 
-      DESCRIPTION: _postPhotoDto.description,
-      WEIGHT: _postPhotoDto.weight,
-      QUANTITY: _postPhotoDto.quantity,
+      DESCRIPTION: widget.foodWasteData.description,
+      WEIGHT: widget.foodWasteData.weight,
+      QUANTITY: widget.foodWasteData.quantity,
       SUBMISSION_DATE: DateTime.now(),
       POST_LOCATION: GeoPoint(locationData.latitude, locationData.longitude)
     })
@@ -186,7 +161,16 @@ class _PostImageScreenState extends State<PostImageScreen> {
   @override
   Widget build(BuildContext context){
     return Scaffold(
-      body: _postPhotoForm(context)
+      body:SingleChildScrollView(
+        padding: EdgeInsets.only(top: 50),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _image(context),
+            _form(context)
+          ],
+        )
+      )
     );
   }
 }

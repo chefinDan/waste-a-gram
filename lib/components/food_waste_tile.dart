@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:waste_a_gram/app.dart';
 import 'package:waste_a_gram/components/dismissible_background.dart';
 import 'package:waste_a_gram/constants.dart';
 import 'package:waste_a_gram/util/util.dart';

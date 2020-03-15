@@ -2,10 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:waste_a_gram/app.dart';
 import 'package:waste_a_gram/components/custom_text.dart';
 import 'package:waste_a_gram/components/food_waste_tile.dart';
-import 'package:waste_a_gram/components/settings_drawer.dart';
+import 'package:waste_a_gram/components/post_detail_card.dart';
 import 'package:waste_a_gram/constants.dart';
 import 'package:waste_a_gram/screens/select_image_screen.dart';
 
@@ -44,43 +43,24 @@ class HomeScreenState extends State<HomeScreen> {
   void _onDelete(DocumentSnapshot post) async {
     try{
       await FirebaseStorage.instance.ref().child(post[FILENAME]).delete();
-      Firestore.instance.runTransaction(
-        (Transaction transaction) {
-          transaction.delete(post.reference);
-        }
-      );
     } on Exception catch(err){
       print(err.toString());
     }
+    Firestore.instance.runTransaction(
+      (Transaction transaction) {
+        transaction.delete(post.reference);
+      }
+    );
   }
 
-  void _onTapped(){
+  void _onTapped(DocumentSnapshot post){
     stackChildren.add(
       GestureDetector(
         onTap: (){
           stackChildren.removeLast();
           setState(() {});
         },
-        child: Container(
-          color: Colors.black54,
-          alignment: Alignment.topCenter,
-          padding: new EdgeInsets.only(
-            top: MediaQuery.of(context).size.height/4,
-            right: 20.0,
-            left: 20.0
-          ),
-          child: GestureDetector(
-            onTap: (){},
-            child: new Container(
-              height: 200.0,
-              width: MediaQuery.of(context).size.width,
-              child: new Card(
-                color: Colors.white,
-                elevation: 4.0,
-              ),
-            ),
-          )
-        ),
+        child: PostDetailCard(post: post)
       ));
     setState(() {});
   }
@@ -101,7 +81,7 @@ class HomeScreenState extends State<HomeScreen> {
               _onDelete(post);
             },
             onTapped: () {
-              _onTapped();
+              _onTapped(post);
             },
           );
         }
@@ -161,7 +141,10 @@ class HomeScreenState extends State<HomeScreen> {
       body: Stack(
         children: stackChildren, 
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.deepOrange[300],
+        splashColor: Colors.white,
         onPressed: () {
           Navigator.of(context).push(MaterialPageRoute(builder: (context) => SelectImageScreen() ));
         },
