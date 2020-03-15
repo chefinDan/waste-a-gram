@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -5,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:location/location.dart';
 import 'package:path/path.dart' as p;
 import 'package:waste_a_gram/constants.dart';
-import 'package:waste_a_gram/screens/home_screen.dart';
 
 class PostPhotoDto{
   String description;
@@ -138,10 +138,33 @@ class _PostImageScreenState extends State<PostImageScreen> {
     );
   }
 
+  String status(StorageUploadTask task) {
+    String result;
+    if (task.isComplete) {
+      if (task.isSuccessful) {
+        result = 'Complete';
+      } else if (task.isCanceled) {
+        result = 'Canceled';
+      } else {
+        result = 'Failed ERROR: ${task.lastSnapshot.error}';
+      }
+    } else if (task.isInProgress) {
+      result = 'Uploading';
+    } else if (task.isPaused) {
+      result = 'Paused';
+    }
+    return result;
+  }
+
   Future _postImage() async {
-    String fileName = '${DateTime.now()}.${p.basename(widget.image.path)}';
+    final String fileName = '${DateTime.now()}.${p.basename(widget.image.path)}';
     StorageReference storageRef = FirebaseStorage.instance.ref().child(fileName);
-    StorageUploadTask uploadTask = storageRef.putFile(widget.image);
+    StorageUploadTask uploadTask = storageRef.putFile(
+      widget.image,
+      StorageMetadata(
+        customMetadata: <String, String>{'activity': 'test'},
+      )
+    );
     Firestore.instance.collection(POSTS).add({
       FILENAME: fileName, 
       DESCRIPTION: _postPhotoDto.description,

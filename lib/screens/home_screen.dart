@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:waste_a_gram/app.dart';
+import 'package:waste_a_gram/components/custom_text.dart';
 import 'package:waste_a_gram/components/food_waste_tile.dart';
 import 'package:waste_a_gram/components/settings_drawer.dart';
 import 'package:waste_a_gram/constants.dart';
@@ -22,10 +24,9 @@ class HomeScreenState extends State<HomeScreen> {
 
   // -- state
   bool switchVal;
-  StreamBuilder _foodWasteStreamBuilder;
-  Stream<QuerySnapshot> _foodWasteStream;
   int _foodWasteTotal;
-  List<DocumentSnapshot> _docSnapshots = [];
+  Stream<QuerySnapshot> _foodWasteStream;
+  List<Widget> stackChildren = [];
   // -- 
 
   bool get getSwitchVal => widget.preferences.getBool(SWITCH_VALUE);
@@ -38,9 +39,53 @@ class HomeScreenState extends State<HomeScreen> {
     saveSwitchVal(switchVal);
     widget.updateState(); 
   }
-  
 
-  Widget _postListBuilder(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot){
+
+  void _onDelete(DocumentSnapshot post) async {
+    try{
+      await FirebaseStorage.instance.ref().child(post[FILENAME]).delete();
+      Firestore.instance.runTransaction(
+        (Transaction transaction) {
+          transaction.delete(post.reference);
+        }
+      );
+    } on Exception catch(err){
+      print(err.toString());
+    }
+  }
+
+  void _onTapped(){
+    stackChildren.add(
+      GestureDetector(
+        onTap: (){
+          stackChildren.removeLast();
+          setState(() {});
+        },
+        child: Container(
+          color: Colors.black54,
+          alignment: Alignment.topCenter,
+          padding: new EdgeInsets.only(
+            top: MediaQuery.of(context).size.height/4,
+            right: 20.0,
+            left: 20.0
+          ),
+          child: GestureDetector(
+            onTap: (){},
+            child: new Container(
+              height: 200.0,
+              width: MediaQuery.of(context).size.width,
+              child: new Card(
+                color: Colors.white,
+                elevation: 4.0,
+              ),
+            ),
+          )
+        ),
+      ));
+    setState(() {});
+  }
+
+  Widget _foodListBuilder(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot){
     if(snapshot.hasData){
       if(snapshot.data.documents.length == 0){
         return Center(child: CircularProgressIndicator());
@@ -50,20 +95,16 @@ class HomeScreenState extends State<HomeScreen> {
         itemCount: snapshot.data.documents.length,
         itemBuilder: (context, index){
           DocumentSnapshot post = snapshot.data.documents[index];
-          _docSnapshots.add(post);
           return FoodWasteTile(
             snapshot: post,
-            onDelete: (){
-              StorageReference fileRef = FirebaseStorage.instance.ref().child(post[FILENAME]);
-              fileRef.delete().catchError((err) => print(err));
-              Firestore.instance.runTransaction(
-                (Transaction transaction) {
-                  return transaction.delete(post.reference);
-                }
-              );
-            }
+            onDelete: () {
+              _onDelete(post);
+            },
+            onTapped: () {
+              _onTapped();
+            },
           );
-        },
+        }
       );
     }else{
       return Center(child: CircularProgressIndicator());
@@ -78,12 +119,12 @@ class HomeScreenState extends State<HomeScreen> {
           _foodWasteTotal += documentSnapshot.data[QUANTITY];
         });
       });
-        print(_foodWasteTotal);
     });
   }
 
   @override 
   void initState() {
+    super.initState();
     try{
       switchVal = getSwitchVal ? true : false;
     }
@@ -93,45 +134,33 @@ class HomeScreenState extends State<HomeScreen> {
       print(err);
     }
     _foodWasteStream = Firestore.instance.collection('posts').orderBy(SUBMISSION_DATE, descending: true).snapshots().asBroadcastStream();
-    _foodWasteStreamBuilder = StreamBuilder<QuerySnapshot>(
+    stackChildren.insert(0,StreamBuilder<QuerySnapshot>(
       stream: _foodWasteStream,
-      builder: _postListBuilder,
-    );
-    setState(() {});
+      builder: _foodListBuilder,
+    ));
     updateFoodWasteTotalCount();
-    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.deepOrange[300],
+        backgroundColor: getSwitchVal ? Colors.blueGrey[800]: Colors.deepOrange[300],
         title: Container(
           alignment: Alignment.centerLeft,
           width: MediaQuery.of(context).size.width,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Text(widget.title, 
-                style: TextStyle(
-                  shadows: [
-                    Shadow(
-                      color: Colors.deepOrange[500], 
-                      offset: Offset(2, 2)
-                    )
-                  ],
-                  fontSize: 24
-
-                ),
-              ), 
+              appBarTitle(widget.title), 
               Text(_foodWasteTotal.toString())
             ]
           ),
         ),
       ),
-      endDrawer: SettingsDrawer(updateState: updateSwitch),
-      body: _foodWasteStreamBuilder,
+      body: Stack(
+        children: stackChildren, 
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.of(context).push(MaterialPageRoute(builder: (context) => SelectImageScreen() ));
