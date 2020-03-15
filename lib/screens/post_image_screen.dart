@@ -2,8 +2,10 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:location/location.dart';
 import 'package:path/path.dart' as p;
 import 'package:waste_a_gram/constants.dart';
+import 'package:waste_a_gram/screens/home_screen.dart';
 
 class PostPhotoDto{
   String description;
@@ -24,6 +26,17 @@ class _PostImageScreenState extends State<PostImageScreen> {
 
   final formKey = GlobalKey<FormState>();
   final PostPhotoDto _postPhotoDto = PostPhotoDto();
+  LocationData locationData;
+
+  @override
+  void initState() {
+    var locationService = Location();
+    locationService.getLocation().then((data) {
+      locationData = data;
+      setState(() {});
+    });
+    super.initState();
+  }
 
   Widget _descriptionTextField(BuildContext context){
     return TextFormField(
@@ -44,7 +57,9 @@ class _PostImageScreenState extends State<PostImageScreen> {
       ),
       validator: (value) { 
         if(value.isEmpty) { return "$WEIGHT cannot be empty"; }
-        if(int.tryParse(value) == null) { return "$WEIGHT must be an integer number"; } 
+        var parsed = int.tryParse(value);
+        if(parsed == null) { return "$WEIGHT must be an integer number"; }
+        else if(parsed < 1) { return "$WEIGHT must be positive"; } 
         return null;
         },
       onSaved: (value) => _postPhotoDto.weight = value,
@@ -59,7 +74,9 @@ class _PostImageScreenState extends State<PostImageScreen> {
       ),
       validator: (value) { 
         if(value.isEmpty) { return "$QUANTITY cannot be empty"; }
-        if(int.tryParse(value) == null) { return "$QUANTITY must be an integer number"; } 
+        var parsed = int.tryParse(value);
+        if(parsed == null) { return "$QUANTITY must be an integer number"; }
+        else if(parsed < 1) { return '$QUANTITY must be positive'; } 
         return null;
         },
       onSaved: (value) => _postPhotoDto.quantity = int.parse(value),
@@ -131,13 +148,15 @@ class _PostImageScreenState extends State<PostImageScreen> {
       WEIGHT: _postPhotoDto.weight,
       QUANTITY: _postPhotoDto.quantity,
       SUBMISSION_DATE: DateTime.now(),
+      POST_LOCATION: GeoPoint(locationData.latitude, locationData.longitude)
     })
     .then((DocumentReference addResult) async {
       await uploadTask.onComplete;
       final imageUrl = await storageRef.getDownloadURL();
       Firestore.instance.collection(POSTS).document(addResult.documentID)
         .updateData({IMAGE_URL: imageUrl})
-        .catchError((err) => print(err.toString()));  
+        .catchError((err) => print(err.toString()));
+        
     });
   }
 

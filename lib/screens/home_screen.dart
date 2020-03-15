@@ -22,7 +22,10 @@ class HomeScreenState extends State<HomeScreen> {
 
   // -- state
   bool switchVal;
-  Stream<QuerySnapshot> _postStream;
+  StreamBuilder _foodWasteStreamBuilder;
+  Stream<QuerySnapshot> _foodWasteStream;
+  int _foodWasteTotal;
+  List<DocumentSnapshot> _docSnapshots = [];
   // -- 
 
   bool get getSwitchVal => widget.preferences.getBool(SWITCH_VALUE);
@@ -40,15 +43,16 @@ class HomeScreenState extends State<HomeScreen> {
   Widget _postListBuilder(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot){
     if(snapshot.hasData){
       if(snapshot.data.documents.length == 0){
-        return Center(child: Text('You have no photos', style: Theme.of(context).textTheme.display1,));
+        return Center(child: CircularProgressIndicator());
       }
       return ListView.builder(
         padding: EdgeInsets.only(top: 20),
         itemCount: snapshot.data.documents.length,
         itemBuilder: (context, index){
-          DocumentSnapshot post = snapshot.data.documents[index]; 
+          DocumentSnapshot post = snapshot.data.documents[index];
+          _docSnapshots.add(post);
           return FoodWasteTile(
-            snapshot: post, 
+            snapshot: post,
             onDelete: (){
               StorageReference fileRef = FirebaseStorage.instance.ref().child(post[FILENAME]);
               fileRef.delete().catchError((err) => print(err));
@@ -57,8 +61,8 @@ class HomeScreenState extends State<HomeScreen> {
                   return transaction.delete(post.reference);
                 }
               );
-
-            });
+            }
+          );
         },
       );
     }else{
@@ -66,7 +70,20 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  @override void initState() {
+  void updateFoodWasteTotalCount(){
+    _foodWasteStream.listen((QuerySnapshot querySnapshot) {
+      _foodWasteTotal = 0;
+      querySnapshot.documents.forEach((DocumentSnapshot documentSnapshot) {
+        setState(() {
+          _foodWasteTotal += documentSnapshot.data[QUANTITY];
+        });
+      });
+        print(_foodWasteTotal);
+    });
+  }
+
+  @override 
+  void initState() {
     try{
       switchVal = getSwitchVal ? true : false;
     }
@@ -75,7 +92,13 @@ class HomeScreenState extends State<HomeScreen> {
       saveSwitchVal(switchVal);
       print(err);
     }
-    _postStream = Firestore.instance.collection('posts').orderBy(SUBMISSION_DATE, descending: true).snapshots();
+    _foodWasteStream = Firestore.instance.collection('posts').orderBy(SUBMISSION_DATE, descending: true).snapshots().asBroadcastStream();
+    _foodWasteStreamBuilder = StreamBuilder<QuerySnapshot>(
+      stream: _foodWasteStream,
+      builder: _postListBuilder,
+    );
+    setState(() {});
+    updateFoodWasteTotalCount();
     super.initState();
   }
 
@@ -83,13 +106,32 @@ class HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        backgroundColor: Colors.deepOrange[300],
+        title: Container(
+          alignment: Alignment.centerLeft,
+          width: MediaQuery.of(context).size.width,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Text(widget.title, 
+                style: TextStyle(
+                  shadows: [
+                    Shadow(
+                      color: Colors.deepOrange[500], 
+                      offset: Offset(2, 2)
+                    )
+                  ],
+                  fontSize: 24
+
+                ),
+              ), 
+              Text(_foodWasteTotal.toString())
+            ]
+          ),
+        ),
       ),
       endDrawer: SettingsDrawer(updateState: updateSwitch),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _postStream,
-        builder: _postListBuilder
-      ),
+      body: _foodWasteStreamBuilder,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.of(context).push(MaterialPageRoute(builder: (context) => SelectImageScreen() ));

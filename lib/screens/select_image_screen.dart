@@ -26,8 +26,10 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
           RaisedButton(
             child: Text('Select Photo'),
             onPressed: () async {
-              File image = await   ImagePicker.pickImage(source: ImageSource.gallery);
-              pushPostImageScreen(image);
+              File image = await ImagePicker.pickImage(source: ImageSource.gallery);
+              if(image != null){
+                pushPostImageScreen(image);
+              }
             }
           ),
         ]

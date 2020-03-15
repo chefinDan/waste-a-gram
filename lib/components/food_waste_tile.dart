@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:waste_a_gram/components/dismissible_background.dart';
 import 'package:waste_a_gram/constants.dart';
+import 'package:waste_a_gram/screens/home_screen.dart';
+import 'package:waste_a_gram/util/util.dart';
 
 class FoodWasteTile extends StatefulWidget{
 
@@ -19,20 +21,24 @@ class _FoodWasteTileState extends State<FoodWasteTile> {
   @override
   Widget build(BuildContext context) {
     var post = widget.snapshot;
-    return Dismissible(
-      background: DismissibleBackground(direction: LEFT_TO_RIGHT, color: Colors.redAccent),
-      secondaryBackground: DismissibleBackground(direction: RIGHT_TO_LEFT, color: Colors.redAccent),
-      onDismissed: (_) {
-        widget.onDelete();
-      },
-      key: Key(post.hashCode.toString()), 
-      child: _FoodWasteItem(
-        thumbnail: post[IMAGE_URL],
-        description: post[DESCRIPTION],
-        quantity: post[QUANTITY],
-        weight: post[WEIGHT],
-        submissionDate: (post[SUBMISSION_DATE] as Timestamp).toDate(),
-      )
+    return GestureDetector(
+      onTap: () {print('tap');},
+      child: Dismissible(
+        background: DismissibleBackground(direction: LEFT_TO_RIGHT, color: Colors.redAccent),
+        secondaryBackground: DismissibleBackground(direction: RIGHT_TO_LEFT, color: Colors.redAccent),
+        onDismissed: (_) {
+          widget.onDelete();
+        },
+        key: Key(post.hashCode.toString()), 
+        child: _FoodWasteItem(
+          thumbnail: post[IMAGE_URL],
+          description: post[DESCRIPTION],
+          quantity: post[QUANTITY],
+          weight: post[WEIGHT],
+          submissionDate: (post[SUBMISSION_DATE] as Timestamp).toDate(),
+          postLocation: post[POST_LOCATION],
+        )
+      ),
     );
   }
 }
@@ -45,6 +51,7 @@ class _FoodWasteItem extends StatelessWidget {
     this.quantity,
     this.weight,
     this.submissionDate,
+    this.postLocation
   });
 
   final String thumbnail;
@@ -52,39 +59,7 @@ class _FoodWasteItem extends StatelessWidget {
   final int quantity;
   final String weight;
   final DateTime submissionDate;
-
-  String monthString(DateTime dateTime){
-    switch (dateTime.month) {
-      case DateTime.january: return 'January';
-      case DateTime.february: return 'February';
-      case DateTime.march: return 'March';
-      case DateTime.april: return 'April';
-      case DateTime.may: return 'May';
-      case DateTime.june: return 'June';
-      case DateTime.july: return 'July';
-      case DateTime.august: return 'August';
-      case DateTime.september: return 'September';
-      case DateTime.october: return 'October';
-      case DateTime.november: return 'November';
-      case DateTime.december: return 'December';
-      case DateTime.march: return 'March';
-        break;
-      default: return '';
-    } 
-  }
-
-  String weekdayToString(DateTime dateTime){
-    switch (dateTime.weekday) {
-      case DateTime.monday: return 'Monday';
-      case DateTime.tuesday: return 'Tuesday';
-      case DateTime.wednesday: return 'Wednesday';
-      case DateTime.thursday: return 'Thursday';
-      case DateTime.friday: return 'Friday';
-      case DateTime.saturday: return 'Saturday';
-      case DateTime.sunday: return 'Sunday';
-      default: return '';
-    } 
-  }
+  final GeoPoint postLocation;
   
 
   Widget imageAndQuantity(BuildContext context){
@@ -154,54 +129,6 @@ class _FoodWasteItem extends StatelessWidget {
           ),
         ],
       )
-    );
-  }
-}
-class _FoodWasteData extends StatelessWidget {
-  const _FoodWasteData ({
-    Key key,
-    this.description,
-    this.quantity,
-    this.weight,
-    this.submissionDate,
-  }) : super(key: key);
-
-  final String description;
-  final int quantity;
-  final String weight;
-  final DateTime submissionDate;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(5.0, 0.0, 0.0, 0.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            description,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 18.0,
-            ),
-          ),
-          Padding(padding: EdgeInsets.symmetric(vertical: 1.0)),
-          Text(
-            '$quantity pcs.',
-            style: const TextStyle(fontSize: 12.0),
-          ),
-          Padding(padding: EdgeInsets.symmetric(vertical: 2.0)),
-          Text(
-            '${submissionDate.hour}:${submissionDate.minute} ${submissionDate.month}/${submissionDate.day}/${submissionDate.year}',
-            style: const TextStyle(fontSize: 12.0),
-          ),
-          Padding(padding: EdgeInsets.symmetric(vertical: 1.0)),
-          Text(
-            '$weight lbs',
-            style: const TextStyle(fontSize: 12.0),
-          ),
-        ],
-      ),
     );
   }
 }
