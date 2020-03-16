@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:waste_a_gram/constants.dart';
+import 'package:waste_a_gram/util/util.dart';
 
 class PostDetailCard extends StatelessWidget{
   
@@ -27,9 +28,22 @@ class PostDetailCard extends StatelessWidget{
       );
     }
     else{
-      ret = FadeInImage.assetNetwork(
-        placeholder: LOADING_GIF, 
-        image: post[IMAGE_URL], 
+      ret = Image.network(
+        post[IMAGE_URL],
+        frameBuilder: (BuildContext context, Widget child, int frame, bool wasSynchronouslyLoaded) {
+          if (wasSynchronouslyLoaded) {
+            return child;
+          }
+          if(frame == null)
+            return Center(child: CircularProgressIndicator());
+
+          return AnimatedOpacity(
+            child: child,
+            opacity: frame == null ? 0 : 1,
+            duration: const Duration(seconds: 2),
+            curve: Curves.easeOut,
+          );
+        }, 
         alignment: Alignment.topLeft,
         fit: BoxFit.contain
       );
@@ -44,26 +58,46 @@ class PostDetailCard extends StatelessWidget{
         _description(),
         _quantity(),
         _weight(),
-        _submissionDate(),
         _location()
       ],
     );
   }
 
   Widget _description(){
-    return Text(post[DESCRIPTION], style: TextStyle(fontSize: 20),);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(post[DESCRIPTION], style: TextStyle(fontSize: 20),),
+      ],
+    );
   }
 
   Widget _quantity(){
-    return Text(post[QUANTITY].toString(), style: TextStyle(fontSize: 20),);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text('Quantity: ', style: TextStyle(fontSize: 20)),
+        Text(post[QUANTITY].toString(), style: TextStyle(fontSize: 20),),
+      ],
+    );
   }
 
   Widget _weight(){
-    return Text(post[WEIGHT].toString(), style: TextStyle(fontSize: 20),);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text('Weight: ', style: TextStyle(fontSize: 20)),
+        Text(post[WEIGHT].toString(), style: TextStyle(fontSize: 20),),
+      ],
+    );
   }
 
   Widget _submissionDate(){
-    return Text((post[SUBMISSION_DATE] as Timestamp).toDate().toString(), style: TextStyle(fontSize: 20),);
+    final date = post[SUBMISSION_DATE].toDate();
+    return Padding(
+      padding: EdgeInsets.only(top: 15.0),
+      child: Text('${weekdayToString(date)}, ${monthString(date)} ${date.day} ${date.year}', style: TextStyle(fontSize: 20),),
+    );
   }
 
   Widget _location(){
@@ -95,10 +129,11 @@ class PostDetailCard extends StatelessWidget{
       color: Colors.white,
       elevation: 10.0,
       child: Column(
-        // mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Expanded(flex: 1, child: _image()),
-          Expanded(flex: 1, child: _details())
+          Expanded(flex: 1, child: _submissionDate()),
+          Expanded(flex: 5, child: _image()),
+          Expanded(flex: 4, child: _details())
         ],
       ),
     );

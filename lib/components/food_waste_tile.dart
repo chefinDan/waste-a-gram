@@ -91,6 +91,7 @@ class _FoodWasteItem extends StatelessWidget {
               ),
             ),
           ),
+          (thumbnail == null) ? CircularProgressIndicator(): Container(),
           Padding(
             padding: const EdgeInsets.only(right: 20.0),
             child: Center(
@@ -108,40 +109,4 @@ class _FoodWasteItem extends StatelessWidget {
       )
     );
   }
-
-  
-
-  // @override
-  // Widget build(BuildContext context) {
-    // return Container(
-    //   decoration: BoxDecoration(
-    //     color: Colors.cyan[200],
-    //     gradient: LinearGradient(colors: [Colors.cyan[200], Colors.white]),
-    //     border: Border(bottom: BorderSide(width: 1.0, color: Colors.white))
-    //   ),
-    //   height: MediaQuery.of(context).size.height/14,
-    //   child: Row(
-    //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    //     children: [
-    //       Padding(
-    //         padding: EdgeInsets.only(left: 10.0),
-    //         child: Text('${weekdayToString(submissionDate)}, ${monthString(submissionDate)} ${submissionDate.day}',
-    //           style: TextStyle(
-    //             color: Colors.black, 
-    //             fontWeight: FontWeight.w700,
-    //             fontSize: 24, 
-    //             fontStyle: FontStyle.italic, 
-    //             shadows: [Shadow(color: Colors.white, offset: Offset(5, 5), blurRadius: 2)]),
-    //         ),
-    //       ),
-    //       Padding(
-    //         padding: const EdgeInsets.only(right: 20.0),
-    //         child: Center(
-    //           child: Text(quantity.toString(), style: TextStyle(color: Colors.deepOrange, fontSize: 20, fontWeight: FontWeight.w700))
-    //         ),
-    //       ),
-    //     ],
-    //   )
-    // );
-  // }
 }

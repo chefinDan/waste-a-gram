@@ -3,17 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:waste_a_gram/screens/upload_image_screen.dart';
 
-class SelectImageScreen extends StatefulWidget{
-  @override
-  _SelectImageScreenState createState() => _SelectImageScreenState();
-}
+class SelectImageScreen extends StatelessWidget{
 
-class _SelectImageScreenState extends State<SelectImageScreen> {
-
-  void pushPostImageScreen(File image){
-    Navigator.of(context).pushReplacement(MaterialPageRoute(
-      builder: (context) => UploadImageScreen(image: image)
-    ));
+  Widget _selectImageButton(BuildContext context){
+    return RaisedButton(
+      child: Text('Select Photo'),
+      onPressed: () async {
+        File image = await ImagePicker.pickImage(source: ImageSource.gallery);
+        if(image != null){
+          Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (context) => UploadImageScreen(image: image)
+          ));
+        }
+      }
+    );
   }
 
   @override
@@ -23,15 +26,7 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          RaisedButton(
-            child: Text('Select Photo'),
-            onPressed: () async {
-              File image = await ImagePicker.pickImage(source: ImageSource.gallery);
-              if(image != null){
-                pushPostImageScreen(image);
-              }
-            }
-          ),
+          _selectImageButton(context)
         ]
       )
     );
