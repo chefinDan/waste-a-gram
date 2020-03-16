@@ -1,6 +1,6 @@
-import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:waste_a_gram/components/custom_text.dart';
 import 'package:waste_a_gram/components/dismissible_background.dart';
 import 'package:waste_a_gram/constants.dart';
 import 'package:waste_a_gram/util/util.dart';
@@ -84,11 +84,7 @@ class _FoodWasteItem extends StatelessWidget {
             padding: EdgeInsets.only(left: 10.0),
             child: Text(
               '${weekdayToString(submissionDate)}, ${monthString(submissionDate)} ${submissionDate.day}',
-              style: TextStyle(
-                color: Colors.black, 
-                fontWeight: FontWeight.w400,
-                fontSize: 20,
-              ),
+              style: tileDateStyle
             ),
           ),
           (thumbnail == null) ? CircularProgressIndicator(): Container(),
@@ -97,11 +93,7 @@ class _FoodWasteItem extends StatelessWidget {
             child: Center(
               child: Text(
                 quantity.toString(), 
-                style: TextStyle(
-                  color: Colors.deepOrange[400], 
-                  fontSize: 20, 
-                  fontWeight: FontWeight.w700
-                )
+                style: tileQuantityStyle
               )
             ),
           ),

@@ -113,7 +113,10 @@ class HomeScreenState extends State<HomeScreen> {
       saveSwitchVal(switchVal);
       print(err);
     }
-    _foodWasteStream = Firestore.instance.collection('posts').orderBy(SUBMISSION_DATE, descending: true).snapshots().asBroadcastStream();
+    _foodWasteStream = Firestore.instance.collection('posts')
+      .orderBy(SUBMISSION_DATE, descending: true)
+      .snapshots()
+      .asBroadcastStream();
     stackChildren.insert(0,StreamBuilder<QuerySnapshot>(
       stream: _foodWasteStream,
       builder: _foodListBuilder,
