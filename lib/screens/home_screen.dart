@@ -102,6 +102,18 @@ class HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Widget _newPostButton(BuildContext context){
+    return FloatingActionButton(
+      elevation: 2,
+      backgroundColor: Colors.deepOrange[300],
+      splashColor: Colors.white,
+      onPressed: () {
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) => SelectImageScreen() ));
+      },
+      child: Icon(Icons.add),  
+    );
+  }
+
   @override 
   void initState() {
     super.initState();
@@ -141,17 +153,10 @@ class HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: (stackChildren.length == 1) ? _newPostButton(context) : null,
       body: Stack(
         children: stackChildren, 
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.deepOrange[300],
-        splashColor: Colors.white,
-        onPressed: () {
-          Navigator.of(context).push(MaterialPageRoute(builder: (context) => SelectImageScreen() ));
-        },
-        child: Icon(Icons.add),  
       ),
     );
   }

@@ -19,6 +19,21 @@ class SelectImageScreen extends StatelessWidget{
     );
   }
 
+    Widget _openCameraButton(BuildContext context){
+    return RaisedButton(
+      child: Text('Use Camera'),
+      onPressed: () async {
+        File image = await ImagePicker.pickImage(source: ImageSource.camera);
+        if(image != null){
+          Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (context) => UploadImageScreen(image: image)
+          ));
+        }
+      }
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,7 +41,8 @@ class SelectImageScreen extends StatelessWidget{
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _selectImageButton(context)
+          _selectImageButton(context),
+          _openCameraButton(context)
         ]
       )
     );

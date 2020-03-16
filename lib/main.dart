@@ -16,4 +16,3 @@ void main() async {
 
   runApp(App(preferences: await SharedPreferences.getInstance()));
 }
-
