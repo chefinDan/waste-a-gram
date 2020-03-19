@@ -1,82 +1,52 @@
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:waste_a_gram/components/custom_text.dart';
+import 'package:waste_a_gram/components/addPostButton.dart';
+import 'package:waste_a_gram/components/appBarContent.dart';
 import 'package:waste_a_gram/components/food_waste_tile.dart';
 import 'package:waste_a_gram/components/post_detail_card.dart';
 import 'package:waste_a_gram/constants.dart';
 import 'package:waste_a_gram/screens/select_image_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  HomeScreen({Key key, this.title, this.updateState, this.preferences }) : super(key: key);
+  HomeScreen({Key key, this.title, this.preferences, this.firestore, this.storage}) : 
+    stream = firestore
+      .collection(POSTS)
+      .orderBy(SUBMISSION_DATE, descending: true)
+      .snapshots(),
+    super(key: key);
 
   final String title;
-  final Function updateState;
   final SharedPreferences preferences;
+  final Firestore firestore;
+  final Stream<QuerySnapshot> stream;
+  final StorageReference storage;
 
   @override
   HomeScreenState createState() => HomeScreenState();
 }
 
-class HomeScreenState extends State<HomeScreen> { 
-
+class HomeScreenState extends State<HomeScreen> {
   // -- state
   bool switchVal;
   int _foodWasteTotal;
-  Stream<QuerySnapshot> _foodWasteStream;
   List<Widget> stackChildren = [];
-  // -- 
+  // --
 
-  bool get getSwitchVal => widget.preferences.getBool(SWITCH_VALUE);
-  void saveSwitchVal(bool val) => widget.preferences.setBool(SWITCH_VALUE, val);
-  
-  void updateSwitch(newVal){
-    setState(() {
-      switchVal = newVal;
-    });
-    saveSwitchVal(switchVal);
-    widget.updateState(); 
-  }
-
-
-  void _onDelete(DocumentSnapshot post) async {
-    try{
-      await FirebaseStorage.instance.ref().child(post[FILENAME]).delete();
-    } on Exception catch(err){
-      print(err.toString());
-    }
-    Firestore.instance.runTransaction(
-      (Transaction transaction) {
-        transaction.delete(post.reference);
-      }
-    );
-  }
-
-  void _onTapped(DocumentSnapshot post){
-    stackChildren.add(
-      GestureDetector(
-        onTap: (){
-          stackChildren.removeLast();
-          setState(() {});
-        },
-        child: PostDetailCard(post: post)
-      ));
-    setState(() {});
-  }
-
-  Widget _foodListBuilder(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot){
-    if(snapshot.hasData){
-      if(snapshot.data.documents.length == 0){
+  Widget _foodListBuilder(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+    if (snapshot.hasData) {
+      if (snapshot.data.documents.length == 0) {
         return Center(child: CircularProgressIndicator());
       }
       return ListView.builder(
         padding: EdgeInsets.only(top: 20),
         itemCount: snapshot.data.documents.length,
-        itemBuilder: (context, index){
+        itemBuilder: (context, index) {
           DocumentSnapshot post = snapshot.data.documents[index];
           return FoodWasteTile(
-            snapshot: post,
+            postData: post,
             onDelete: () {
               _onDelete(post);
             },
@@ -86,77 +56,93 @@ class HomeScreenState extends State<HomeScreen> {
           );
         }
       );
-    }else{
+    } 
+    else {
       return Center(child: CircularProgressIndicator());
     }
   }
 
-  void updateFoodWasteTotalCount(){
-    _foodWasteStream.listen((QuerySnapshot querySnapshot) {
-      _foodWasteTotal = 0;
-      querySnapshot.documents.forEach((DocumentSnapshot documentSnapshot) {
-        setState(() {
-          _foodWasteTotal += documentSnapshot.data[QUANTITY];
-        });
-      });
+  void _onDelete(DocumentSnapshot post) async {
+    try {
+      await widget.storage.child(post[FILENAME]).delete();
+    } on Exception catch (err) {
+      print(err.toString());
+    }
+    widget.firestore.runTransaction((Transaction transaction) {
+      return transaction.delete(post.reference);
     });
   }
+  
 
-  Widget _newPostButton(BuildContext context){
-    return FloatingActionButton(
-      elevation: 2,
-      backgroundColor: Colors.deepOrange[300],
-      splashColor: Colors.white,
-      onPressed: () {
-        Navigator.of(context).push(MaterialPageRoute(builder: (context) => SelectImageScreen() ));
-      },
-      child: Icon(Icons.add),  
+  void _onTapped(DocumentSnapshot post) {
+    final Future<Uint8List> imageData = widget.storage
+      .child(post[FILENAME])
+      .getData(ONE_MEGABYTE*10);
+
+    stackChildren.add(
+      GestureDetector(
+        onTap: () {
+        stackChildren.removeLast();
+          setState(() {});
+        },
+        child: PostDetailCard(
+          post: post,
+          imageStream: imageData.asStream() 
+        )
+      )
     );
+    setState(() {});
   }
 
-  @override 
+  int sumTotalWaste(QuerySnapshot snapshot){
+    return snapshot.documents.fold(0, (prev, DocumentSnapshot curr) => prev + curr.data[QUANTITY]); 
+  }
+
+  Widget _floatingActionButton(){
+    return (stackChildren.length == 1) ? 
+      AddPostButton(
+        onPressed: (){
+          Navigator.of(context)
+            .push(MaterialPageRoute(builder: (context) => SelectImageScreen()));
+          },
+      ) : Container();
+  }
+
+  @override
   void initState() {
     super.initState();
-    try{
-      switchVal = getSwitchVal ? true : false;
+    if (stackChildren.length != 0) {
+      stackChildren.clear();
     }
-    catch(err){
-      switchVal = false;
-      saveSwitchVal(switchVal);
-      print(err);
-    }
-    _foodWasteStream = Firestore.instance.collection('posts')
-      .orderBy(SUBMISSION_DATE, descending: true)
-      .snapshots()
-      .asBroadcastStream();
-    stackChildren.insert(0,StreamBuilder<QuerySnapshot>(
-      stream: _foodWasteStream,
+    stackChildren.insert(0, StreamBuilder<QuerySnapshot>(
+      stream: widget.stream,
       builder: _foodListBuilder,
     ));
-    updateFoodWasteTotalCount();
+    widget.stream.map<int>(sumTotalWaste)
+      .listen((int total) {
+        _foodWasteTotal = total;
+        setState(() {});
+      });
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: getSwitchVal ? Colors.blueGrey[800]: Colors.deepOrange[300],
-        title: Container(
-          alignment: Alignment.centerLeft,
-          width: MediaQuery.of(context).size.width,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              appBarTitle(widget.title), 
-              Text(_foodWasteTotal.toString())
-            ]
-          ),
+        backgroundColor: Colors.deepOrange[300],
+        title: AppBarTitle(
+          title: widget.title,
+          foodWasteTotal: _foodWasteTotal,
         ),
+        actions: [
+          AppBarActions.sort()
+        ]
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: (stackChildren.length == 1) ? _newPostButton(context) : null,
+      floatingActionButton: _floatingActionButton(),
       body: Stack(
-        children: stackChildren, 
+        children: stackChildren,
       ),
     );
   }

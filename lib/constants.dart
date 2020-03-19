@@ -14,3 +14,4 @@ const RIGHT_TO_LEFT = 'rtl';
 const LEFT_TO_RIGHT = 'ltr';
 const LOADING_GIF = 'lib/assets/loading.gif';
 const POST_LOCATION = 'location';
+const ONE_MEGABYTE = 1024*1024; 

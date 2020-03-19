@@ -1,3 +1,5 @@
+import 'dart:async';
+
 String monthString(DateTime dateTime){
   switch (dateTime.month) {
     case DateTime.january: return 'January';
@@ -29,4 +31,21 @@ String weekdayToString(DateTime dateTime){
     case DateTime.sunday: return 'Sunday';
     default: return '';
   } 
+}
+
+Future<T> runSafe<T>(Future<T> Function() func) {
+  final onDone = Completer<T>();
+  runZoned(
+    func,
+    onError: (e, s) {
+      if (!onDone.isCompleted) {
+        onDone.completeError(e, s as StackTrace);
+      }
+    },
+  ).then((result) {
+    if (!onDone.isCompleted) {
+      onDone.complete(result);
+    }
+  });
+  return onDone.future;
 }

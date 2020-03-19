@@ -1,54 +1,74 @@
+import 'dart:typed_data';
 import 'dart:ui';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_image/network.dart' as fl;
 import 'package:waste_a_gram/constants.dart';
 import 'package:waste_a_gram/util/util.dart';
 
 class PostDetailCard extends StatelessWidget{
   
-  final DocumentSnapshot post;
+  PostDetailCard({this.post, this.imageStream});
 
-  PostDetailCard({this.post});
+  final DocumentSnapshot post;
+  Stream<Uint8List> imageStream;
+
+  Widget getImage(){
+    return StreamBuilder<Uint8List>(
+      stream: imageStream,
+      builder: (BuildContext context, AsyncSnapshot<Uint8List> snapshot){
+        if (snapshot.hasData) {
+          return Image.memory(snapshot.data);
+        }
+        else{
+          return Center(child: CircularProgressIndicator());
+        }
+      }
+    );
+  }
 
   Widget _image(){
-    Widget ret;
-    final img = post[IMAGE_URL];
-    if(img == null){
-      ret = LayoutBuilder(
-        builder: (context, constraints){
-          return Center(
-            child: Container(
-              height: constraints.maxHeight,
-              width: constraints.maxWidth,
-              color: Colors.grey[300],
-              child: Icon(Icons.broken_image, size: constraints.maxWidth/8,))
-          );
-        }  
-      );
-    }
-    else{
-      ret = Image.network(
+    return Image(
+      frameBuilder: (BuildContext context, Widget child, int frame, bool wasSynchronouslyLoaded) {
+        if (wasSynchronouslyLoaded) {
+          return child;
+        }
+        if(frame == null){
+          return Center(child: CircularProgressIndicator());
+        }
+        return AnimatedOpacity(
+          child: child,
+          opacity: frame == null ? 0 : 1,
+          duration: const Duration(seconds: 1),
+          curve: Curves.easeOut,
+        );
+      },
+      image: fl.NetworkImageWithRetry(
         post[IMAGE_URL],
-        frameBuilder: (BuildContext context, Widget child, int frame, bool wasSynchronouslyLoaded) {
-          if (wasSynchronouslyLoaded) {
-            return child;
+        fetchStrategy: (uri, failure) {
+          if(failure == null){
+            return Future.value(
+              fl.FetchInstructions.attempt(
+                uri: uri, 
+                timeout: Duration(seconds: 5)
+              )
+            );
           }
-          if(frame == null)
-            return Center(child: CircularProgressIndicator());
-
-          return AnimatedOpacity(
-            child: child,
-            opacity: frame == null ? 0 : 1,
-            duration: const Duration(seconds: 2),
-            curve: Curves.easeOut,
-          );
-        }, 
-        alignment: Alignment.topLeft,
-        fit: BoxFit.contain
-      );
-    }
-    return ret;
+          if(failure?.attemptCount < 3){
+            return Future.delayed(Duration(seconds: 1))
+              .then((_) => fl.FetchInstructions
+                .attempt(
+                  uri: uri,
+                  timeout: Duration(seconds: 5)
+                )
+              );    
+          }
+          else{
+            return Future.value(fl.FetchInstructions.giveUp(uri: uri));
+          }
+        }
+      )
+    );
   }
 
   Widget _details(){
@@ -108,7 +128,6 @@ class PostDetailCard extends StatelessWidget{
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.not_listed_location),
-          // Text(loc.toString())
         ],
       );
     }
@@ -132,8 +151,8 @@ class PostDetailCard extends StatelessWidget{
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           Expanded(flex: 1, child: _submissionDate()),
-          Expanded(flex: 5, child: _image()),
-          Expanded(flex: 4, child: _details())
+          Expanded(flex: 5, child: getImage()),
+          Expanded(flex: 4, child: _details()),
         ],
       ),
     );

@@ -7,11 +7,11 @@ import 'package:waste_a_gram/util/util.dart';
 
 class FoodWasteTile extends StatefulWidget{
 
-  final DocumentSnapshot snapshot;
+  final DocumentSnapshot postData;
   final Function onDelete;
   final Function onTapped;
 
-  FoodWasteTile({this.snapshot, this.onDelete, this.onTapped});
+  FoodWasteTile({this.postData, this.onDelete, this.onTapped});
 
   @override
   _FoodWasteTileState createState() => _FoodWasteTileState();
@@ -20,21 +20,20 @@ class FoodWasteTile extends StatefulWidget{
 class _FoodWasteTileState extends State<FoodWasteTile> {
   @override
   Widget build(BuildContext context) {
-    var post = widget.snapshot;
     return Dismissible(
       background: DismissibleBackground(direction: LEFT_TO_RIGHT, color: Colors.redAccent),
       secondaryBackground: DismissibleBackground(direction: RIGHT_TO_LEFT, color: Colors.redAccent),
       onDismissed: (_) {
         widget.onDelete();
       },
-      key: Key(post.hashCode.toString()), 
-      child: _FoodWasteItem(
-        thumbnail: post[IMAGE_URL],
-        description: post[DESCRIPTION],
-        quantity: post[QUANTITY],
-        weight: post[WEIGHT],
-        submissionDate: (post[SUBMISSION_DATE] as Timestamp).toDate(),
-        postLocation: post[POST_LOCATION],
+      key: Key(widget.postData.hashCode.toString()), 
+      child: _FoodWasteData(
+        thumbnail: widget.postData[IMAGE_URL],
+        description: widget.postData[DESCRIPTION],
+        quantity: widget.postData[QUANTITY],
+        weight: widget.postData[WEIGHT],
+        submissionDate: (widget.postData[SUBMISSION_DATE] as Timestamp).toDate(),
+        postLocation: widget.postData[POST_LOCATION],
         onTapped: widget.onTapped
       )
     );
@@ -42,8 +41,8 @@ class _FoodWasteTileState extends State<FoodWasteTile> {
 }
 
 
-class _FoodWasteItem extends StatelessWidget {
-  const _FoodWasteItem({
+class _FoodWasteData extends StatelessWidget {
+  const _FoodWasteData({
     this.thumbnail,
     this.description,
     this.quantity,

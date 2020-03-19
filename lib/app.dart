@@ -1,12 +1,15 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:waste_a_gram/constants.dart';
 import 'package:waste_a_gram/screens/home_screen.dart';
 
 class App extends StatefulWidget {
+  App({Key key, this.preferences, this.firestore, this.storage}) : super(key: key);
+  
   final SharedPreferences preferences;
-
-  App({Key key, this.preferences}) : super(key: key);
+  final Firestore firestore;
+  final StorageReference storage;
 
   @override
   AppState createState() => AppState();
@@ -14,40 +17,16 @@ class App extends StatefulWidget {
 
 class AppState extends State<App> {
 
-  ThemeData themeData;
-
-  bool get isDarkTheme => widget.preferences.getBool(DARK_THEME);
-  void setTheme (bool tf) => widget.preferences.setBool(DARK_THEME, tf);
-
-  void updateTheme(){
-    setState(() {
-      themeData = isDarkTheme ? ThemeData.light() : ThemeData.dark();
-    });
-    setTheme(!isDarkTheme);
-  }
-
-  @override
-  void initState(){
-    super.initState();
-    try{
-      themeData = isDarkTheme ? ThemeData.dark(): ThemeData.light();
-    }
-    catch(err){
-      setTheme(false);
-      print(err);
-    }
-  }
-
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Waste-a-gram',
-      theme: themeData,
+      theme: ThemeData.light(),
       home: HomeScreen(
-        title: 'Waste-a-gram', 
-        updateState: updateTheme, 
+        title: 'Waste-a-gram',
         preferences: widget.preferences,
+        firestore: widget.firestore,
+        storage: widget.storage
       ),
     );
   }
