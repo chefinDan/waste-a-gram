@@ -1,4 +1,4 @@
-package com.example.waste_a_gram
+package osu.greendan.waste_a_gram
 
 import androidx.annotation.NonNull;
 import io.flutter.embedding.android.FlutterActivity

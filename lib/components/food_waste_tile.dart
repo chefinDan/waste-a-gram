@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:waste_a_gram/components/custom_text.dart';
 import 'package:waste_a_gram/components/dismissible_background.dart';
 import 'package:waste_a_gram/constants.dart';
+import 'package:waste_a_gram/models/food_waste_data.dart';
 import 'package:waste_a_gram/util/util.dart';
 
 class FoodWasteTile extends StatefulWidget{
 
-  final DocumentSnapshot postData;
+  final FoodWasteData postData;
   final Function onDelete;
   final Function onTapped;
 
@@ -21,19 +22,20 @@ class _FoodWasteTileState extends State<FoodWasteTile> {
   @override
   Widget build(BuildContext context) {
     return Dismissible(
-      background: DismissibleBackground(direction: LEFT_TO_RIGHT, color: Colors.redAccent),
-      secondaryBackground: DismissibleBackground(direction: RIGHT_TO_LEFT, color: Colors.redAccent),
+      confirmDismiss: (direction) => Future.value(direction == DismissDirection.startToEnd),
+      background: DismissibleBackground(DismissDirection.startToEnd, color: Colors.redAccent),
+      secondaryBackground: DismissibleBackground(DismissDirection.endToStart, color: Colors.grey),
       onDismissed: (_) {
         widget.onDelete();
       },
       key: Key(widget.postData.hashCode.toString()), 
-      child: _FoodWasteData(
-        thumbnail: widget.postData[IMAGE_URL],
-        description: widget.postData[DESCRIPTION],
-        quantity: widget.postData[QUANTITY],
-        weight: widget.postData[WEIGHT],
-        submissionDate: (widget.postData[SUBMISSION_DATE] as Timestamp).toDate(),
-        postLocation: widget.postData[POST_LOCATION],
+      child: _MinimizedCard(
+        imageUrl: widget.postData.imageUrl,
+        description: widget.postData.description,
+        quantity: widget.postData.quantity,
+        weight: widget.postData.weight,
+        submissionDate: widget.postData.subissionDate.toDate(),
+        postLocation: widget.postData.location,
         onTapped: widget.onTapped
       )
     );
@@ -41,9 +43,9 @@ class _FoodWasteTileState extends State<FoodWasteTile> {
 }
 
 
-class _FoodWasteData extends StatelessWidget {
-  const _FoodWasteData({
-    this.thumbnail,
+class _MinimizedCard extends StatelessWidget {
+  const _MinimizedCard({
+    this.imageUrl,
     this.description,
     this.quantity,
     this.weight,
@@ -52,7 +54,7 @@ class _FoodWasteData extends StatelessWidget {
     this.onTapped,
   });
 
-  final String thumbnail;
+  final String imageUrl;
   final String description;
   final int quantity;
   final String weight;
@@ -80,21 +82,25 @@ class _FoodWasteData extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Padding(
-            padding: EdgeInsets.only(left: 10.0),
+            padding: EdgeInsets.only(left: 20.0),
             child: Text(
               '${weekdayToString(submissionDate)}, ${monthString(submissionDate)} ${submissionDate.day}',
               style: tileDateStyle
             ),
           ),
-          (thumbnail == null) ? CircularProgressIndicator(): Container(),
-          Padding(
-            padding: const EdgeInsets.only(right: 20.0),
-            child: Center(
-              child: Text(
-                quantity.toString(), 
-                style: tileQuantityStyle
-              )
-            ),
+          (imageUrl == null) ? CircularProgressIndicator(): Container(),
+          Container(
+            width: MediaQuery.of(context).size.width/4,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Text(
+                  quantity.toString(), 
+                  style: tileQuantityStyle
+                ),
+                IconButton(icon: Icon(Icons.expand_more), onPressed: null)
+              ] 
+            )
           ),
         ],
       )

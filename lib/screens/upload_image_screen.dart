@@ -151,10 +151,10 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
     .then((DocumentReference addResult) async {
       await uploadTask.onComplete;
       final imageUrl = await storageRef.getDownloadURL();
+      print('updating url: $imageUrl');
       Firestore.instance.collection(POSTS).document(addResult.documentID)
         .updateData({IMAGE_URL: imageUrl})
-        .catchError((err) => print(err.toString()));
-        
+        .catchError((err) => print(err.toString()));  
     });
   }
 
