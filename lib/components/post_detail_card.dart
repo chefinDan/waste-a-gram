@@ -1,16 +1,14 @@
 import 'dart:typed_data';
 import 'dart:ui';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_image/network.dart' as fl;
-import 'package:waste_a_gram/models/food_waste_data.dart';
+import 'package:waste_a_gram/models/post.dart';
 import 'package:waste_a_gram/util/util.dart';
 
 class PostDetailCard extends StatelessWidget{
   
   PostDetailCard({this.post, this.imageStream, this.onTapped});
 
-  final FoodWasteData post;
+  final Post post;
   final Stream<Uint8List> imageStream;
   final Function onTapped;
 
@@ -70,7 +68,7 @@ class PostDetailCard extends StatelessWidget{
   }
 
   Widget _submissionDate(){
-    final date = post.subissionDate.toDate();
+    final date = post.submissionDate.toDate();
     return Padding(
       padding: EdgeInsets.only(top: 15.0),
       child: Text('${weekdayToString(date)}, ${monthString(date)} ${date.day} ${date.year}', style: TextStyle(fontSize: 20),),

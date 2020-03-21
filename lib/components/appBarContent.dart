@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:waste_a_gram/components/custom_text.dart';
+import 'package:waste_a_gram/util/util.dart';
 
 class AppBarTitle extends StatelessWidget{
 
@@ -26,11 +27,9 @@ class AppBarTitle extends StatelessWidget{
 
 class AppBarActions extends StatelessWidget{ 
 
-  ActionType actionType;
+  final ActionType actionType;
 
-  AppBarActions.sort(){
-    actionType = ActionType.sort;
-  }
+  AppBarActions.sort() : actionType = ActionType.sort;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +40,8 @@ class AppBarActions extends StatelessWidget{
           tooltip: 'Sort Posts',
           onPressed: (){},
         );
+      default:
+        return emptyWidget;
     }
   }
 }

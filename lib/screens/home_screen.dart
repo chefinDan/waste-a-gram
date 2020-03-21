@@ -1,15 +1,13 @@
 import 'dart:typed_data';
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:waste_a_gram/components/addPostButton.dart';
 import 'package:waste_a_gram/components/appBarContent.dart';
-import 'package:waste_a_gram/components/food_waste_tile.dart';
-import 'package:waste_a_gram/components/post_detail_card.dart';
 import 'package:waste_a_gram/constants.dart';
-import 'package:waste_a_gram/models/food_waste_data.dart';
+import 'package:waste_a_gram/models/post.dart';
 import 'package:waste_a_gram/models/post_list.dart';
 import 'package:waste_a_gram/screens/select_image_screen.dart';
 
@@ -22,7 +20,7 @@ class HomeScreen extends StatefulWidget {
   final SharedPreferences preferences;
   final Firestore firestore;
   final CollectionReference postCollection;
-  final StorageReference storage;
+  final FirebaseStorage storage;
 
   @override
   HomeScreenState createState() => HomeScreenState();
@@ -30,47 +28,28 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> {
   // -- state
-  bool switchVal;
   int _foodWasteTotal;
-  List<Widget> stackChildren = [];
   PostList _postList;
   Future<Uint8List> tappedImageData;
   // --
 
-  void populatePostList(){
-    widget.postCollection
-      .orderBy(SUBMISSION_DATE, descending: true)
-      .snapshots()
-      .listen(
-        (QuerySnapshot snapshot) {
-          snapshot.documents.where(
-            (DocumentSnapshot docSnapshot) {
-              print('docSnapshot: ${docSnapshot.documentID}');
-              return !_postList.contains(snapshot: docSnapshot);
-            }
-          ).forEach(
-            (DocumentSnapshot snapshot) => _postList.add(snapshot: snapshot)
-          );
-          setState(() {});
-        }
-      );
-  }
-
-
-  void _onDelete(FoodWasteData post) async {
+  void _onDelete(Post post) async {
     try {
-      await widget.storage.child(post.filename).delete();
+      await widget.storage.ref().child(post.filename).delete();
     } on Exception catch (err) {
       print(err.toString());
     }
     widget.firestore.runTransaction((Transaction transaction) {
       return transaction.delete(post.snapshotReference);
     });
+    setState(() {
+      _foodWasteTotal = _postList.totalWaste;
+    });
   }
   
 
-  void _onTapped(FoodWasteData tappedPost) {
-    tappedImageData = widget.storage
+  void _onTapped(Post tappedPost) {
+    tappedImageData = widget.storage.ref()
       .child(tappedPost.filename)
       .getData(ONE_MEGABYTE*10);
     setState(() {});
@@ -90,7 +69,7 @@ class HomeScreenState extends State<HomeScreen> {
     );
     _postList.listen(_setState);
   }
-
+  
   void _setState(){
     setState(() {});
   }

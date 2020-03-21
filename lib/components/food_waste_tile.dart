@@ -2,13 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:waste_a_gram/components/custom_text.dart';
 import 'package:waste_a_gram/components/dismissible_background.dart';
-import 'package:waste_a_gram/constants.dart';
-import 'package:waste_a_gram/models/food_waste_data.dart';
+import 'package:waste_a_gram/models/post.dart';
 import 'package:waste_a_gram/util/util.dart';
 
 class FoodWasteTile extends StatefulWidget{
 
-  final FoodWasteData postData;
+  final Post postData;
   final Function onDelete;
   final Function onTapped;
 
@@ -34,7 +33,7 @@ class _FoodWasteTileState extends State<FoodWasteTile> {
         description: widget.postData.description,
         quantity: widget.postData.quantity,
         weight: widget.postData.weight,
-        submissionDate: widget.postData.subissionDate.toDate(),
+        submissionDate: widget.postData.submissionDate.toDate(),
         postLocation: widget.postData.location,
         onTapped: widget.onTapped
       )
@@ -88,7 +87,7 @@ class _MinimizedCard extends StatelessWidget {
               style: tileDateStyle
             ),
           ),
-          (imageUrl == null) ? CircularProgressIndicator(): Container(),
+          (imageUrl == null) ? CircularProgressIndicator(): emptyWidget,
           Container(
             width: MediaQuery.of(context).size.width/4,
             child: Row(

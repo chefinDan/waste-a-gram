@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -6,14 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:location/location.dart';
 import 'package:path/path.dart' as p;
 import 'package:waste_a_gram/constants.dart';
-import 'package:waste_a_gram/models/food_waste_data.dart';
+import 'package:waste_a_gram/models/post.dart';
 
 class UploadImageScreen extends StatefulWidget{
 
-  FoodWasteData foodWasteData;
-  UploadImageScreen({File image}){
-    this.foodWasteData = FoodWasteData(image: image);
-  }
+  final Post post;
+  UploadImageScreen({File image}) : this.post = Post(image: image);
 
   @override
   _UploadImageScreenState createState() => _UploadImageScreenState();
@@ -41,7 +38,7 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
         labelText: DESCRIPTION, border: OutlineInputBorder()
       ),
       validator: (value) { if(value.isEmpty) {return "$DESCRIPTION cannot be empty"; } return null; },
-      onSaved: (value) => widget.foodWasteData.description = value
+      onSaved: (value) => widget.post.description = value
     );
   }
 
@@ -59,7 +56,7 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
         else if(parsed < 1) { return "$WEIGHT minimum 1 oz"; } 
         return null;
         },
-      onSaved: (value) => widget.foodWasteData.weight = value,
+      onSaved: (value) => widget.post.weight = value,
     );  
   }
 
@@ -77,7 +74,7 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
         else if(parsed < 1) { return '$QUANTITY must be positive'; } 
         return null;
         },
-      onSaved: (value) => widget.foodWasteData.quantity = int.parse(value),
+      onSaved: (value) => widget.post.quantity = int.parse(value),
     );
   }
 
@@ -85,7 +82,7 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
     return Container(
       padding: EdgeInsets.only(bottom: 10),
       constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height/2),
-      child: Image.file(widget.foodWasteData.image, fit: BoxFit.fitHeight,)
+      child: Image.file(widget.post.image, fit: BoxFit.fitHeight,)
     );
   }
 
@@ -131,27 +128,26 @@ class _UploadImageScreenState extends State<UploadImageScreen> {
     );
   }
 
-  Future _postImage() async {
-    final String fileName = '${DateTime.now()}.${p.basename(widget.foodWasteData.image.path)}';
+  void _postImage() {
+    final String fileName = '${DateTime.now()}.${p.basename(widget.post.image.path)}';
     StorageReference storageRef = FirebaseStorage.instance.ref().child(fileName);
     StorageUploadTask uploadTask = storageRef.putFile(
-      widget.foodWasteData.image,
+      widget.post.image,
       StorageMetadata(
         customMetadata: <String, String>{'activity': 'test'},
       )
     );
     Firestore.instance.collection(POSTS).add({
       FILENAME: fileName, 
-      DESCRIPTION: widget.foodWasteData.description,
-      WEIGHT: widget.foodWasteData.weight,
-      QUANTITY: widget.foodWasteData.quantity,
+      DESCRIPTION: widget.post.description,
+      WEIGHT: widget.post.weight,
+      QUANTITY: widget.post.quantity,
       SUBMISSION_DATE: DateTime.now(),
       POST_LOCATION: GeoPoint(locationData.latitude, locationData.longitude)
     })
     .then((DocumentReference addResult) async {
       await uploadTask.onComplete;
       final imageUrl = await storageRef.getDownloadURL();
-      print('updating url: $imageUrl');
       Firestore.instance.collection(POSTS).document(addResult.documentID)
         .updateData({IMAGE_URL: imageUrl})
         .catchError((err) => print(err.toString()));  

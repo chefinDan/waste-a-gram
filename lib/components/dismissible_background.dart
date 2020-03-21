@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:waste_a_gram/util/util.dart';
 
 class DismissibleBackground extends StatelessWidget{
 
@@ -22,7 +23,7 @@ class DismissibleBackground extends StatelessWidget{
             padding: EdgeInsets.only(left: 20, right: 20),
             child: (direction == DismissDirection.startToEnd) 
               ? Icon(Icons.delete, color: Colors.white, size: 30,)
-              : Container()
+              : emptyWidget
           )
         ],
       ),

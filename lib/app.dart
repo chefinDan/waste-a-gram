@@ -9,7 +9,7 @@ class App extends StatefulWidget {
   
   final SharedPreferences preferences;
   final Firestore firestore;
-  final StorageReference storage;
+  final FirebaseStorage storage;
 
   @override
   AppState createState() => AppState();

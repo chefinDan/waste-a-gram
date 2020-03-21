@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +19,7 @@ void main() async {
   final app = App(
     preferences: await SharedPreferences.getInstance(),
     firestore: Firestore.instance,
-    storage: FirebaseStorage.instance.ref()
+    storage: FirebaseStorage.instance
   );
 
   runApp(app);

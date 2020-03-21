@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
+
 String monthString(DateTime dateTime){
   switch (dateTime.month) {
     case DateTime.january: return 'January';
@@ -49,3 +51,5 @@ Future<T> runSafe<T>(Future<T> Function() func) {
   });
   return onDone.future;
 }
+
+const Widget emptyWidget = SizedBox.shrink();
